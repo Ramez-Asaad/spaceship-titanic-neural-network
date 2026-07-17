@@ -45,5 +45,9 @@ submission*.csv
 outliers.png
 predictions.csv
 
+# The original coursework report is kept locally but not published. The
+# technical write-up in reports/technical-report.pdf supersedes it.
+reports/original-report.pdf
+
 # NOTE: models/ is intentionally tracked. The trained weights are small (~280 KB)
 # and the Streamlit demo needs them at runtime to deploy without a training step.
