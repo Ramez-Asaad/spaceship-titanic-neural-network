@@ -1,0 +1,4 @@
+# Only needed to run the Phase 2 Keras baselines (`--model keras`).
+# The from-scratch network and the Streamlit app do not need TensorFlow.
+-r requirements.txt
+tensorflow>=2.15

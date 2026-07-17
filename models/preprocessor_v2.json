@@ -1,0 +1,66 @@
+{
+  "stats": {
+    "medians": {
+      "Age": 27.0,
+      "Cabin_Num": 427.0,
+      "GroupSize": 1.0
+    },
+    "mean": [
+      28.790291038766824,
+      2.035545841481652,
+      596.3989416772115,
+      1.735295420541687,
+      1.9065425831691734,
+      1.599414552044192,
+      1.8388512916747703,
+      1.7579499766576159,
+      4.253005058207165
+    ],
+    "std": [
+      14.34057929409562,
+      1.5962546875032093,
+      506.6086574618365,
+      2.7191281483686227,
+      2.9327820898971684,
+      2.5672985942289865,
+      2.7692083987550205,
+      2.746651933676402,
+      3.689137465318228
+    ]
+  },
+  "feature_names": [
+    "Age",
+    "GroupSize",
+    "Cabin_Num",
+    "RoomService",
+    "FoodCourt",
+    "ShoppingMall",
+    "Spa",
+    "VRDeck",
+    "TotalSpend",
+    "CryoSleep",
+    "VIP",
+    "IsAlone",
+    "NoSpend",
+    "HomePlanet_Earth",
+    "HomePlanet_Europa",
+    "HomePlanet_Mars",
+    "HomePlanet_Unknown",
+    "Destination_55 Cancri e",
+    "Destination_PSO J318.5-22",
+    "Destination_TRAPPIST-1e",
+    "Destination_Unknown",
+    "Cabin_Deck_A",
+    "Cabin_Deck_B",
+    "Cabin_Deck_C",
+    "Cabin_Deck_D",
+    "Cabin_Deck_E",
+    "Cabin_Deck_F",
+    "Cabin_Deck_G",
+    "Cabin_Deck_T",
+    "Cabin_Deck_Unknown",
+    "Cabin_Side_P",
+    "Cabin_Side_S",
+    "Cabin_Side_Unknown"
+  ]
+}

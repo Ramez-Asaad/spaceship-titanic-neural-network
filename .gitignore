@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Environments / tooling
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local agent config
+.claude/
+
+# Generated predictions
+submission*.csv
+
+# Leftovers from the 2024 coursework that OneDrive cannot rehydrate on this
+# machine ("cloud operation was unsuccessful"), so they cannot be committed.
+# The report's outlier plot is reproducible from src/data.py; the predictions
+# are reproducible with `python -m src.predict`.
+outliers.png
+predictions.csv
+
+# NOTE: models/ is intentionally tracked. The trained weights are small (~280 KB)
+# and the Streamlit demo needs them at runtime to deploy without a training step.
