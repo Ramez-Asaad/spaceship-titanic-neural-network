@@ -10,6 +10,8 @@ implemented directly, with no autograd and no deep learning framework. Keras and
 scikit-learn versions are included as baselines to check the hand-written
 implementation against.
 
+**[Try the live demo](https://spaceship--titanic.streamlit.app/)**, or run it locally:
+
 ```bash
 pip install -r requirements.txt
 python -m src.train --model v2        # train (~15s, CPU)
@@ -97,8 +99,10 @@ inference needs no scikit-learn and there is no version-coupled binary to break.
 
 ## The web app
 
-An interactive demo. Enter a passenger record, get a transport probability and a
-breakdown of what drove it.
+An interactive demo, [live at
+spaceship--titanic.streamlit.app](https://spaceship--titanic.streamlit.app/).
+Enter a passenger record, get a transport probability and a breakdown of what
+drove it. Run it locally with:
 
 ```bash
 streamlit run app/streamlit_app.py
