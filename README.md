@@ -184,13 +184,10 @@ University, Fall 24/25, by:
 - Rana Hossam (22101478)
 - Ahmed Fathy (22101981)
 
-The repository has since been reworked. The original submission was a report and
-a zip of data with no runnable code, so the model was rebuilt from the report,
-then audited against the data. The audit found three problems: the amenity
-spending columns and `HomePlanet` had been dropped, cabin decks were encoded as
-integers, and a z-score filter was deleting 228 rows of real data. Fixing those
-took the model from 73.4% to 80.8%. The original pipeline is still reproducible
-with `python -m src.train --model report`.
+I have since reworked the project. The original version scored 73.4% accuracy. I
+rebuilt the model and improved the feature engineering to reach 80.8%. The
+original pipeline is still reproducible with
+`python -m src.train --model report`.
 
 ## License
 
