@@ -1,229 +1,195 @@
-# Spaceship Titanic — Neural Network from Scratch
+# Spaceship Titanic: Neural Network from Scratch
 
 A binary classifier for the [Kaggle Spaceship Titanic](https://www.kaggle.com/competitions/spaceship-titanic)
-competition: given a passenger record, predict whether they were transported to
+competition. Given a passenger record, predict whether they were transported to
 an alternate dimension.
 
-The network is **written from scratch in NumPy** — forward propagation,
+The network is written from scratch in NumPy. Forward propagation,
 backpropagation, Xavier initialisation, inverted dropout and mini-batch SGD are
-all implemented directly, with no autograd and no deep-learning framework. Keras
-and scikit-learn versions are included as baselines to check the hand-written
+implemented directly, with no autograd and no deep learning framework. Keras and
+scikit-learn versions are included as baselines to check the hand-written
 implementation against.
 
-Originally coursework for Neural Networks (AIE231) at Alamein International
-University, Fall 24/25. This repository is a rebuild: the original submission was
-a report and a zip of data with no runnable code. Everything here was
-reconstructed from the report, then **audited and improved** — see
-[What the original got wrong](#what-the-original-got-wrong).
+```bash
+pip install -r requirements.txt
+python -m src.train --model v2        # train (~15s, CPU)
+streamlit run app/streamlit_app.py    # interactive demo
+pytest tests/ -q                      # 24 tests (pip install -r requirements-dev.txt)
+```
 
----
+The full write-up, including the backpropagation derivation, is in
+[`reports/technical-report.pdf`](reports/technical-report.pdf).
 
 ## Results
 
-Validation accuracy on a stratified 20% holdout (8,693 training rows, seed 42):
+Validation accuracy on a stratified 20% holdout of the 8,693 training rows,
+seed 42:
 
 | Model | Features | Accuracy | F1 | ROC AUC |
 |---|---|---|---|---|
-| Original report (as documented in 2024) | 6 | 73.9% | — | — |
-| **Report reproduction** (this repo, faithful) | 6 | **73.4%** | 0.707 | 0.791 |
-| Logistic regression (v2 features) | 33 | 77.8% | 0.781 | 0.860 |
-| Keras twin (v2 features, Adam) | 33 | 79.7% | 0.800 | 0.886 |
-| **v2 — from-scratch NN** ⭐ | 33 | **80.8%** | 0.804 | 0.896 |
+| Logistic regression | 33 | 77.8% | 0.781 | 0.860 |
+| Keras equivalent (Adam) | 33 | 79.7% | 0.800 | 0.886 |
+| From-scratch NumPy network | 33 | **80.8%** | 0.804 | 0.896 |
 
-The reproduction landing within 0.6 points of the report's original 73.9% is the
-evidence that the reconstruction is faithful. The v2 model then adds **+7.4
-points** over it.
+The logistic regression row is the linear floor. The network clears it by three
+points, which is what justifies using a network at all.
 
-Two rows are worth dwelling on:
+The from-scratch network also comes in ahead of the Keras model built on the
+same features. That is not because hand-written NumPy is faster or smarter. The
+Keras model uses Adam, which fits the training set harder (86.1% train accuracy
+against 79.7% validation) and generalises slightly worse here than plain SGD.
 
-- **Logistic regression** is the linear floor. The network clears it by 3 points,
-  which is what justifies using a network at all — without this row, "80.8%"
-  means nothing.
-- **The from-scratch network edges out its own Keras twin** (80.8% vs 79.7%) on
-  identical features. Not because hand-written NumPy is faster or smarter, but
-  because the Keras model uses Adam, which fits the training set harder (86.1%
-  train accuracy vs 79.7% validation) and generalises slightly worse here than
-  plain SGD. It is a useful reminder that the better optimiser is not
-  automatically the better model.
+## The network
 
----
-
-## What the original got wrong
-
-The 2024 project scored 73.9%. Rebuilding it surfaced three mistakes, and fixing
-them is most of the gain:
-
-**1. It threw away the most predictive features.**
-The report reduced the dataset to six columns, dropping `HomePlanet` and all five
-amenity-spending columns (`RoomService`, `FoodCourt`, `ShoppingMall`, `Spa`,
-`VRDeck`). Spending is the single strongest signal in this dataset — a passenger
-in cryosleep is confined to their cabin, spends exactly nothing, and is
-transported far more often than not. Dropping those columns discarded the
-relationship the problem turns on. Restoring them is worth roughly 6 points on
-its own.
-
-**2. It forced a false ordering onto categorical variables.**
-Decks `A`–`T` were mapped to integers `0`–`7`, which tells the model deck `G` is
-"greater than" deck `A` and that the gap between `A` and `B` equals the gap
-between `F` and `G`. None of that is true. v2 one-hot encodes them instead.
-
-**3. It deleted real data as "outliers".**
-The report dropped every row with any |z-score| > 3, removing 228 passengers.
-Amenity spending is heavily right-skewed, so a z-score filter mostly deletes
-big spenders — who are precisely the most informative passengers. v2 keeps them
-and applies `log1p` instead, which compresses the tail without discarding anyone.
-
-There is also a genuine bug preserved in `src/keras_models.py`: the report's
-single-layer baseline used `Dense(1, activation='relu')` for binary
-classification. A ReLU output cannot express a probability — it is unbounded
-above and flat at zero below, so cross-entropy sees values outside (0, 1) and any
-passenger mapped below zero yields no gradient. It is reproduced as-written and
-documented, rather than quietly corrected.
-
-### What v2 does instead
-
-- Keeps all 13 usable raw columns, engineered up to 33 features
-- One-hot encodes `HomePlanet`, `Destination`, `Cabin_Deck`, `Cabin_Side`
-- Splits `Cabin` into deck / number / side
-- Derives `GroupSize` and `IsAlone` from the `gggg_pp` passenger ID
-- `log1p` on all spending, plus `TotalSpend` and a `NoSpend` flag
-- Recovers missing `CryoSleep` from spending: anyone billed for an amenity was awake
-- Tuned to `lr=0.01` (the report's `0.001` with plain SGD had not converged; at
-  `lr=0.05` the model overfits — 88.9% train against 79.9% validation)
-
----
-
-## The from-scratch network
-
-`src/scratch_nn.py` is the centrepiece. Architecture `33 → 128 → 128 → 128 → 1`:
-three hidden ReLU layers with dropout, sigmoid output, binary cross-entropy.
+`src/scratch_nn.py` is the core of the project. Architecture is
+`33 -> 128 -> 128 -> 128 -> 1`: three hidden ReLU layers with dropout, sigmoid
+output, binary cross-entropy loss.
 
 Implemented by hand:
 
-- **Xavier/Glorot uniform** initialisation, biases at zero
-- **Forward propagation** with a numerically stable sigmoid (branches on sign so
-  `exp` never overflows)
-- **Backpropagation** — the `sigmoid + BCE` output gradient collapses to
-  `(A - y)/m`, then the chain rule back through dropout masks and the ReLU derivative
-- **Inverted dropout** — scaled at training time, so inference needs no correction
-- **Mini-batch SGD** with per-epoch reshuffling
+- Xavier/Glorot uniform initialisation, biases at zero
+- Forward propagation with a numerically stable sigmoid that branches on sign so
+  `exp` never overflows
+- Backpropagation. The `sigmoid + BCE` output gradient collapses to `(A - y)/m`,
+  then the chain rule runs back through the dropout masks and the ReLU derivative
+- Inverted dropout, scaled at training time so inference needs no correction
+- Mini-batch SGD with per-epoch reshuffling
 
-**Backprop is verified against numerical gradients**, not just assumed correct:
+Backpropagation is verified against numerical gradients rather than assumed
+correct:
 
 ```python
 net.gradient_check(X, y)   # -> 6.96e-08 max relative error
 ```
 
-That check runs as part of the test suite (`tests/test_scratch_nn.py`). Central
-differences agreeing with the analytic gradient to ~1e-8 is what proves the
-derivation is right.
+The check runs as part of the test suite. Central differences agreeing with the
+analytic gradient to roughly 1e-8 is what shows the derivation is right.
 
-The trained model serialises to a ~280 KB `.npz`, and **the Streamlit app serves
-this network** — inference is one matrix multiply per layer, numpy only.
+A trained model serialises to a 280 KB `.npz`. Inference is one matrix multiply
+per layer.
 
----
+## Features
+
+The dataset gives 13 usable columns, engineered up to 33 features.
+
+The strongest signal is amenity spending combined with cryosleep. A passenger in
+cryosleep is confined to their cabin, spends exactly nothing, and is transported
+far more often than not. Most of the feature work follows from that:
+
+- `Cabin` splits into deck, number and side
+- `HomePlanet`, `Destination`, `Cabin_Deck` and `Cabin_Side` are one-hot encoded.
+  Deck labels A through T have no natural ordering, so encoding them as integers
+  would assert a ranking and a uniform spacing that do not exist
+- `GroupSize` and `IsAlone` come from the `gggg_pp` passenger ID, which encodes
+  travel groups
+- Spending gets `log1p`, plus a `TotalSpend` total and a `NoSpend` flag. Spending
+  is heavily right-skewed, and `log1p` compresses the tail without discarding the
+  big spenders, who are the most informative passengers
+- Missing `CryoSleep` is recovered from spending. Anyone billed for an amenity
+  was awake
+
+Every column in the raw data has missing values, roughly 2% each, so imputation
+is a real part of the problem rather than an afterthought.
+
+The preprocessor serialises to plain JSON rather than a pickle. Statistics
+learned on train (medians, means, standard deviations) are stored as numbers, so
+inference needs no scikit-learn and there is no version-coupled binary to break.
 
 ## The web app
 
-An interactive demo: enter a passenger record, get a transport probability plus a
-breakdown of what drove the prediction.
+An interactive demo. Enter a passenger record, get a transport probability and a
+breakdown of what drove it.
 
 ```bash
-pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-The "what is driving this prediction" panel re-scores the passenger with each
-field reset to a neutral value and reports how far the probability moves. It is
-an honest per-prediction sensitivity read, not a global feature importance — and
-it makes the cryosleep effect visible: toggling cryosleep on a Europa passenger
-moves the probability by about +0.20.
+The app serves the from-scratch network directly, so inference needs numpy and
+nothing else. No TensorFlow.
 
-Sanity checks on the deployed model, which line up with the domain:
+The "what is driving this prediction" panel re-scores the passenger with each
+field reset to a neutral value and reports how far the probability moves. It is a
+per-prediction sensitivity read, not a global feature importance. Toggling
+cryosleep on a Europa passenger moves the probability by about +0.20.
+
+Model behaviour on a few hand-checked passengers, which lines up with the domain:
 
 | Passenger | P(transported) |
 |---|---|
 | In cryosleep, no spending | 0.86 |
 | Awake, spent 2,900 across amenities | 0.09 |
-| Everything unknown | 0.40 (≈ the 50/50 base rate, appropriately uncertain) |
+| Everything unknown | 0.40, near the 50/50 base rate |
 
----
-
-## Quickstart
+## Training
 
 ```bash
-git clone https://github.com/Ramez-Asaad/spaceship-titanic-neural-network.git
-cd spaceship-titanic-neural-network
-pip install -r requirements.txt
-
-python -m src.train --model v2        # train the shipped model (~15s, CPU)
-streamlit run app/streamlit_app.py    # launch the demo
-pytest tests/ -q                      # 24 tests, including the gradient check
-```
-
-Other training targets:
-
-```bash
-python -m src.train --model report    # faithful 2024 reproduction (6 features, lr=0.001, 1000 epochs)
+python -m src.train --model v2        # the shipped model
 python -m src.train --model logreg    # linear baseline
-python -m src.train --model keras     # Keras twin (needs: pip install -r requirements-keras.txt)
+python -m src.train --model keras     # Keras equivalent (pip install -r requirements-keras.txt)
+python -m src.train --model report    # the 2024 coursework pipeline, reproduced
+python -m src.predict                 # write a Kaggle submission
 ```
+
+Learning rate is 0.01. At 0.001 with plain SGD the model has not converged by the
+end of training; at 0.05 it overfits, reaching 88.9% train against 79.9%
+validation.
 
 TensorFlow is optional and only used for the Keras baselines. The from-scratch
 model, the tests and the app need nothing beyond numpy, pandas and streamlit.
 
----
-
-## Repository layout
+## Layout
 
 ```
 .
 ├── app/
-│   └── streamlit_app.py     # interactive demo, serves the from-scratch NN
+│   └── streamlit_app.py     # interactive demo
 ├── data/                    # Kaggle train/test splits
-├── models/                  # trained weights + preprocessor stats (tracked, ~280 KB)
+├── models/                  # trained weights + preprocessor stats (tracked, 280 KB)
 ├── reports/
+│   ├── technical-report.pdf # write-up of the current approach, with the maths
+│   ├── technical-report.tex # its LaTeX source
+│   ├── figures/             # generated by src/figures.py
 │   └── original-report.pdf  # the 2024 coursework report
 ├── src/
-│   ├── config.py            # paths, and the report's documented hyperparameters
-│   ├── data.py              # both pipelines: faithful report repro + v2
-│   ├── scratch_nn.py        # ⭐ the from-scratch NumPy network
-│   ├── keras_models.py      # Phase 2 baselines (Keras / scikit-learn)
+│   ├── config.py            # paths and hyperparameters
+│   ├── data.py              # preprocessing
+│   ├── scratch_nn.py        # the from-scratch NumPy network
+│   ├── keras_models.py      # Keras / scikit-learn baselines
 │   ├── train.py             # training CLI
-│   └── predict.py           # Kaggle submission generator
+│   ├── predict.py           # Kaggle submission generator
+│   └── figures.py           # report figures
 └── tests/                   # 24 tests
 ```
 
-The preprocessor serialises to plain JSON rather than a pickle — statistics
-learned on train (medians, means, stds) are stored as numbers, so inference needs
-no scikit-learn and there is no version-coupled binary to break.
-
----
+[`reports/technical-report.pdf`](reports/technical-report.pdf) is the full
+write-up: the backpropagation derivation, why sigmoid pairs with cross-entropy
+rather than squared error, the gradient verification, and the error analysis.
 
 ## Data
 
 From the [Kaggle competition](https://www.kaggle.com/competitions/spaceship-titanic):
-8,693 training rows and 4,277 test rows. The target is near-perfectly balanced
-(50.4% / 49.6%), so plain accuracy is a fair headline metric here.
+8,693 training rows and 4,277 test rows. The target is near-perfectly balanced at
+50.4% against 49.6%, so plain accuracy is a fair headline metric.
 
-Every column has missing values (roughly 2% each) — handling them is a real part
-of the problem, not an afterthought.
+## History
 
----
+This started as coursework for Neural Networks (AIE231) at Alamein International
+University, Fall 24/25, by:
 
-## Credits
+- Ramez Ezzat (22100506)
+- Alaaeldin Ibrahim (22101463)
+- Rana Hossam (22101478)
+- Ahmed Fathy (22101981)
 
-Original coursework team (Neural Networks AIE231, Fall 24/25):
-
-- **Ramez Ezzat** (22100506)
-- **Alaaeldin Ibrahim** (22101463)
-- **Rana Hossam** (22101478)
-- **Ahmed Fathy** (22101981)
-
-The 2024 report is preserved verbatim at `reports/original-report.pdf`. The
-reconstruction, audit, v2 model and web app in this repository are by
-[Ramez Ezzat](https://github.com/Ramez-Asaad).
+The repository has since been reworked. The original submission was a report and
+a zip of data with no runnable code, so the model was rebuilt from the report,
+then audited against the data. The audit found three problems: the amenity
+spending columns and `HomePlanet` had been dropped, cabin decks were encoded as
+integers, and a z-score filter was deleting 228 rows of real data. Fixing those
+took the model from 73.4% to 80.8%. The 2024 report is kept at
+`reports/original-report.pdf`, and its pipeline is still reproducible with
+`python -m src.train --model report`.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

@@ -2,16 +2,15 @@
 
 Two pipelines live here:
 
-``report_pipeline``
-    A faithful reproduction of the preprocessing described in the original
-    Fall 24/25 report: six features, mean/False imputation, ordinal cabin
-    encoding and z-score outlier removal.
-
 ``Preprocessor`` (v2)
-    The reworked pipeline. It keeps the spending columns and HomePlanet that
-    the original dropped, one-hot encodes the categoricals instead of forcing a
-    false ordering on them, and skips the z-score filter that was deleting real
-    signal. See the README for the accuracy difference.
+    The pipeline the shipped model uses. 33 features: one-hot categoricals,
+    group structure recovered from the passenger ID, log1p on the skewed
+    spending columns, and CryoSleep inferred from spending where it is missing.
+
+``report_pipeline``
+    A reproduction of the preprocessing described in the original Fall 24/25
+    coursework report, kept so that result is still runnable: six features,
+    mean/False imputation, ordinal cabin encoding and z-score outlier removal.
 """
 
 from __future__ import annotations
@@ -57,7 +56,7 @@ def add_group_size(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------
-# Pipeline 1 — faithful reproduction of the report
+# Pipeline 1: faithful reproduction of the report
 # --------------------------------------------------------------------------
 
 def report_pipeline(
@@ -111,7 +110,7 @@ def report_pipeline(
 
 
 # --------------------------------------------------------------------------
-# Pipeline 2 — the reworked preprocessor
+# Pipeline 2: the reworked preprocessor
 # --------------------------------------------------------------------------
 
 NUMERIC_FEATURES = [
@@ -135,7 +134,7 @@ ONEHOT_SPECS = {
 
 
 class Preprocessor:
-    """Fit on train, transform anything — including a single row from the app.
+    """Fit on train, transform anything, including a single row from the app.
 
     Everything learned from the data (medians, means, stds) is stored in
     ``self.stats`` and serialises to plain JSON, so inference needs only numpy

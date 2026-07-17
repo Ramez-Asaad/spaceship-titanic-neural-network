@@ -27,6 +27,17 @@ Thumbs.db
 # Generated predictions
 submission*.csv
 
+# LaTeX build artifacts. The .tex source and the built .pdf are both tracked.
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.toc
+
 # Leftovers from the 2024 coursework that OneDrive cannot rehydrate on this
 # machine ("cloud operation was unsuccessful"), so they cannot be committed.
 # The report's outlier plot is reproducible from src/data.py; the predictions

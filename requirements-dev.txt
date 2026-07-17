@@ -1,0 +1,4 @@
+# Tests and report figures. Not needed to train the model or run the app.
+-r requirements.txt
+pytest>=7.0
+matplotlib>=3.7

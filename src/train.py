@@ -67,6 +67,7 @@ def train_v2(epochs: int, learning_rate: float, seed: int) -> dict:
     model.save(config.MODELS_DIR / "nn_v2.npz")
     pre.save(config.MODELS_DIR / "preprocessor_v2.json")
     (config.MODELS_DIR / "metrics_v2.json").write_text(json.dumps(metrics, indent=2))
+    (config.MODELS_DIR / "history_v2.json").write_text(json.dumps(model.history, indent=2))
     print(f"saved -> {config.MODELS_DIR / 'nn_v2.npz'}")
     return metrics
 

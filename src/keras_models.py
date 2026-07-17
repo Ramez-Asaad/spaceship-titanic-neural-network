@@ -30,7 +30,7 @@ def _require_keras():
 
 
 # --------------------------------------------------------------------------
-# Baseline 1 — logistic regression (scikit-learn)
+# Baseline 1: logistic regression (scikit-learn)
 # --------------------------------------------------------------------------
 
 def fit_logistic_regression(X: np.ndarray, y: np.ndarray, max_iter: int = 1000):
@@ -49,7 +49,7 @@ def fit_logistic_regression(X: np.ndarray, y: np.ndarray, max_iter: int = 1000):
 
 
 # --------------------------------------------------------------------------
-# Baseline 2 — single dense layer, ReLU output
+# Baseline 2: single dense layer, ReLU output
 # --------------------------------------------------------------------------
 
 def build_single_layer_relu(n_features: int):
@@ -75,7 +75,7 @@ def build_single_layer_relu(n_features: int):
 
 
 # --------------------------------------------------------------------------
-# Baseline 3 — the report's real architecture
+# Baseline 3: the report's real architecture
 # --------------------------------------------------------------------------
 
 def build_multi_layer(

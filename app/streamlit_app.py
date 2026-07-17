@@ -1,7 +1,7 @@
 """Streamlit demo for the Spaceship Titanic classifier.
 
 The model behind this page is the from-scratch NumPy network in
-``src/scratch_nn.py`` — no TensorFlow at inference, just a matrix multiply per
+``src/scratch_nn.py``. No TensorFlow at inference, just a matrix multiply per
 layer against weights loaded from a .npz file.
 
 Run locally:
@@ -28,7 +28,9 @@ from src.scratch_nn import NeuralNetwork  # noqa: E402
 MODEL_PATH = config.MODELS_DIR / "nn_v2.npz"
 PRE_PATH = config.MODELS_DIR / "preprocessor_v2.json"
 
-st.set_page_config(page_title="Spaceship Titanic — Transport Predictor", page_icon="🚀", layout="wide")
+st.set_page_config(
+    page_title="Spaceship Titanic: Transport Predictor", page_icon=":rocket:", layout="wide"
+)
 
 
 @st.cache_resource
@@ -54,10 +56,10 @@ if not MODEL_PATH.exists() or not PRE_PATH.exists():
 model, pre = load_model()
 metrics = load_metrics()
 
-st.title("🚀 Spaceship Titanic — Transport Predictor")
+st.title("Spaceship Titanic: Transport Predictor")
 st.caption(
     "Predicts whether a passenger was transported to an alternate dimension. "
-    "Served by a neural network written from scratch in NumPy — hand-rolled "
+    "Served by a neural network written from scratch in NumPy: hand-rolled "
     "forward pass, backprop, Xavier init and dropout. No deep-learning framework at inference."
 )
 
@@ -101,7 +103,7 @@ with left:
 
     st.markdown("**Amenity spending**")
     if cryo:
-        st.info("Cryosleep passengers are confined to their cabins — all spending is zero.")
+        st.info("Cryosleep passengers are confined to their cabins, so all spending is zero.")
         spend = dict.fromkeys(config.SPEND_COLUMNS, 0.0)
     else:
         s1, s2, s3 = st.columns(3)
@@ -190,19 +192,23 @@ with right:
 with st.expander("How this model works"):
     st.markdown(
         f"""
-**Architecture** — `{' → '.join(str(s) for s in model.layer_sizes)}`: {len(model.layer_sizes) - 2}
+**Architecture**: `{' -> '.join(str(s) for s in model.layer_sizes)}`, with {len(model.layer_sizes) - 2}
 hidden ReLU layers of 128 units with dropout, sigmoid output, trained on binary
 cross-entropy with mini-batch SGD.
 
-**Written from scratch** — forward propagation, backpropagation, Xavier
+**Written from scratch**: forward propagation, backpropagation, Xavier
 initialisation, inverted dropout and the SGD update are all implemented directly
 in NumPy in `src/scratch_nn.py`. Backprop is verified against numerical
 gradients (max relative error ~7e-08).
 
-**The features that matter** — the strongest signal in this dataset is amenity
-spending and cryosleep: a passenger in cryosleep spends nothing and is
-transported far more often than not. The original 2024 version of this project
-dropped all five spending columns, which cost it roughly 8 points of accuracy.
-See the README for the full before/after.
+**The features that matter**: the strongest signal is the interaction between
+cryosleep and amenity spending. A passenger in cryosleep is confined to their
+cabin, so their billing is exactly zero, and that group is transported far more
+often than not. Spending is effectively a proxy for whether a passenger was
+conscious during the anomaly.
+
+**Performance**: {metrics.get('accuracy', 0):.1%} accuracy on a held-out
+validation split, against a 77.8% logistic regression floor on the same features.
+The full write-up is in `reports/technical-report.pdf`.
 """
     )
